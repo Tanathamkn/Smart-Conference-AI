@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pgvector
+pydantic
+pydantic-settings
+faster-whisper
+python-multipart
+# For embeddings
+sentence-transformers
+# For LLM requests (Typhoon)
+requests
+openai
+alembic
