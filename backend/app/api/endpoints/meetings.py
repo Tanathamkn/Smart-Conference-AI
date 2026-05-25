@@ -18,6 +18,14 @@ UPLOAD_DIR = "/tmp/audio_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 def process_meeting_background(meeting_id: int, file_path: str, db: Session):
+    """
+    Background task that runs the full meeting processing pipeline:
+    1. Transcribes the audio file using faster-whisper (Thai + English).
+    2. Generates vector embeddings for each transcript segment via bge-m3.
+    3. Calls the Typhoon LLM to extract summary, action items, and issues.
+    4. Persists all results to the database.
+    5. Cleans up the uploaded audio file from disk.
+    """
     try:
         # 1. Transcribe Audio
         logger.info(f"[Meeting {meeting_id}] Starting transcription of {file_path}...")
@@ -89,6 +97,12 @@ async def upload_meeting(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    """
+    Accepts an audio file upload (MP3, WAV, M4A) and a meeting title.
+    Saves the file to disk, creates the meeting record in the database,
+    then kicks off processing as a background task so the request returns
+    immediately without blocking the caller.
+    """
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as f:
         f.write(await file.read())
@@ -104,11 +118,20 @@ async def upload_meeting(
 
 @router.get("/meetings")
 def list_meetings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Returns a paginated list of all meetings with their id, title, date, and summary.
+    Use `skip` and `limit` query parameters for pagination.
+    """
     meetings = db.query(Meeting).offset(skip).limit(limit).all()
     return [{"id": m.id, "title": m.title, "date": m.date, "summary": m.summary} for m in meetings]
 
 @router.get("/meetings/{meeting_id}")
 def get_meeting(meeting_id: int, db: Session = Depends(get_db)):
+    """
+    Returns full details for a single meeting including transcript, summary,
+    action items, and issues. Returns 404 if the meeting does not exist.
+    While the meeting is still processing, transcript and summary will be null.
+    """
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
@@ -125,6 +148,10 @@ def get_meeting(meeting_id: int, db: Session = Depends(get_db)):
 
 @router.delete("/meetings/{meeting_id}")
 def delete_meeting(meeting_id: int, db: Session = Depends(get_db)):
+    """
+    Permanently deletes a meeting and all associated data (transcript segments,
+    embeddings, action items, and issues) via cascade. Returns 404 if not found.
+    """
     meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
     if not meeting:
         raise HTTPException(status_code=404, detail="Meeting not found")
@@ -136,6 +163,12 @@ def delete_meeting(meeting_id: int, db: Session = Depends(get_db)):
 
 @router.get("/search")
 def search_meetings(query: str, db: Session = Depends(get_db)):
+    """
+    Performs semantic search across all meeting transcript segments using
+    pgvector (L2 distance) and bge-m3 embeddings. Returns the top 5 most
+    relevant segments and an AI-generated answer from the Typhoon LLM
+    based on the retrieved context.
+    """
     query_embedding = generate_embedding(query)
 
     sql = text("""
