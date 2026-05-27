@@ -13,7 +13,7 @@ function App() {
         <aside className="w-64 glass-dark flex flex-col hidden md:flex border-r border-white/10 relative z-10">
           <div className="p-6">
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-              SmartConf
+              SmartConference
             </h1>
             <p className="text-sm text-gray-400 mt-1">AI Meeting Intelligence</p>
           </div>
@@ -37,7 +37,7 @@ function App() {
         <main className="flex-1 overflow-y-auto relative">
           <div className="absolute top-0 left-0 w-full h-96 bg-primary/20 blur-[120px] rounded-full pointer-events-none -z-10 mix-blend-screen transform -translate-y-1/2"></div>
           <div className="absolute bottom-0 right-0 w-full h-96 bg-secondary/10 blur-[120px] rounded-full pointer-events-none -z-10 mix-blend-screen transform translate-y-1/2 translate-x-1/4"></div>
-          
+
           <div className="p-8 max-w-7xl mx-auto h-full">
             <Routes>
               <Route path="/" element={<Dashboard />} />

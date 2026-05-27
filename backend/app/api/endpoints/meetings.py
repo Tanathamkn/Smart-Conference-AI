@@ -7,7 +7,7 @@ from sqlalchemy import text
 from app.db.session import get_db
 from app.models.db import Meeting, MeetingSegment, ActionItem, Issue
 from app.services.audio_processing import transcribe_audio
-from app.services.llm_processing import extract_meeting_info, qa_meeting
+from app.services.llm_processing import extract_meeting_info, qa_meeting, evaluate_best_transcript
 from app.services.embedding import generate_embedding
 
 logger = logging.getLogger(__name__)
@@ -17,19 +17,30 @@ router = APIRouter()
 UPLOAD_DIR = "/tmp/audio_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-def process_meeting_background(meeting_id: int, file_path: str, db: Session):
+def process_meeting_background(meeting_id: int, file_path: str, db: Session, stt_model: str = "large-v3", ensemble: bool = False):
     """
     Background task that runs the full meeting processing pipeline:
-    1. Transcribes the audio file using faster-whisper (Thai + English).
+    1. Transcribes the audio file using faster-whisper (Thai + English) or Thonburian Whisper.
     2. Generates vector embeddings for each transcript segment via bge-m3.
     3. Calls the Typhoon LLM to extract summary, action items, and issues.
     4. Persists all results to the database.
     5. Cleans up the uploaded audio file from disk.
     """
     try:
-        # 1. Transcribe Audio
-        logger.info(f"[Meeting {meeting_id}] Starting transcription of {file_path}...")
-        segments, full_text = transcribe_audio(file_path)
+        if ensemble:
+            logger.info(f"[Meeting {meeting_id}] Running ENSEMBLE transcription (3 passes) using {stt_model}...")
+            segments1, text1 = transcribe_audio(file_path, stt_model=stt_model, temperature=0.0)
+            segments2, text2 = transcribe_audio(file_path, stt_model=stt_model, temperature=0.2)
+            segments3, text3 = transcribe_audio(file_path, stt_model=stt_model, temperature=0.4)
+            
+            logger.info(f"[Meeting {meeting_id}] Evaluating best ensemble transcript via LLM...")
+            best_text = evaluate_best_transcript(text1, text2, text3)
+            segments = segments1  # Use base segments for timestamps
+            full_text = best_text
+        else:
+            logger.info(f"[Meeting {meeting_id}] Starting transcription of {file_path} using model {stt_model}...")
+            segments, full_text = transcribe_audio(file_path, stt_model=stt_model, temperature=0.0)
+            
         logger.info(f"[Meeting {meeting_id}] Transcription complete. {len(segments)} segments found.")
 
         meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
@@ -94,6 +105,8 @@ def process_meeting_background(meeting_id: int, file_path: str, db: Session):
 async def upload_meeting(
     background_tasks: BackgroundTasks,
     title: str,
+    stt_model: str = "large-v3",
+    ensemble: bool = False,
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -112,7 +125,7 @@ async def upload_meeting(
     db.commit()
     db.refresh(new_meeting)
 
-    background_tasks.add_task(process_meeting_background, new_meeting.id, file_path, Session(bind=db.get_bind()))
+    background_tasks.add_task(process_meeting_background, new_meeting.id, file_path, Session(bind=db.get_bind()), stt_model, ensemble)
 
     return {"message": "Upload successful, processing started.", "meeting_id": new_meeting.id}
 

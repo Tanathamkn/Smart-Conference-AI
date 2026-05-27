@@ -89,8 +89,8 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-4">
             {meetings.map((meeting) => (
-              <Link 
-                key={meeting.id} 
+              <Link
+                key={meeting.id}
                 to={`/meetings/${meeting.id}`}
                 className="block glass-dark p-6 rounded-2xl hover:bg-white/[0.08] transition-all transform hover:-translate-y-1 border border-transparent hover:border-white/10 group"
               >

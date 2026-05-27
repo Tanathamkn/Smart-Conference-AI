@@ -9,9 +9,10 @@ export default function UploadMeeting() {
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [sttModel, setSttModel] = useState('faster-whisper-large-v3');
+  const [ensemble, setEnsemble] = useState(false);
 
-  const handleUpload = async (e: React.FormEvent) => {
-    e.submitter?.blur();
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!file || !title) return;
 
@@ -22,7 +23,7 @@ export default function UploadMeeting() {
     formData.append('file', file);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/meetings/upload?title=${encodeURIComponent(title)}`, {
+      const response = await fetch(`http://localhost:8000/api/meetings/upload?title=${encodeURIComponent(title)}&stt_model=${encodeURIComponent(sttModel)}&ensemble=${ensemble}`, {
         method: 'POST',
         body: formData,
       });
@@ -67,6 +68,34 @@ export default function UploadMeeting() {
               className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               placeholder="e.g. Q3 Planning Meeting"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Speech-to-Text Model</label>
+            <select
+              name="stt_model"
+              id="stt_model"
+              value={sttModel}
+              onChange={(e) => setSttModel(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none"
+            >
+              <option value="faster-whisper-large-v3">Faster Whisper (Large-v3 - Best Quality)</option>
+              <option value="faster-whisper-turbo">Faster Whisper (Turbo - Fast & Good)</option>
+              <option value="thonburian">Thonburian Whisper (Thai Optimized)</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-3 bg-black/20 p-4 rounded-xl border border-white/5">
+            <input
+              type="checkbox"
+              id="ensemble"
+              checked={ensemble}
+              onChange={(e) => setEnsemble(e.target.checked)}
+              className="w-5 h-5 rounded border-gray-400 text-primary focus:ring-primary focus:ring-offset-gray-900 bg-black/40"
+            />
+            <label htmlFor="ensemble" className="text-sm font-medium text-gray-300">
+              Enable Ensemble Mode (Run model 3 times and LLM picks the best result - Slower)
+            </label>
           </div>
 
           <div>

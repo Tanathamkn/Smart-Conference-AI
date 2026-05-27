@@ -34,16 +34,31 @@ export default function MeetingDetailsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/meetings/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setMeeting(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to fetch meeting", err);
-        setLoading(false);
-      });
+    let timeoutId: number;
+
+    const fetchMeeting = () => {
+      fetch(`http://localhost:8000/api/meetings/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          setMeeting(data);
+          setLoading(false);
+          
+          // Poll again if still processing
+          if (!data.summary && !data.transcript) {
+            timeoutId = window.setTimeout(fetchMeeting, 3000);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch meeting", err);
+          setLoading(false);
+        });
+    };
+
+    fetchMeeting();
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, [id]);
 
   const handleDelete = async () => {
@@ -101,9 +116,14 @@ export default function MeetingDetailsPage() {
           </div>
           <div className="flex items-center space-x-3">
             {isProcessing && (
-              <div className="px-4 py-2 bg-indigo-500/20 text-indigo-300 rounded-full text-sm font-medium border border-indigo-500/30 flex items-center">
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
+              <div className="flex flex-col items-end">
+                <div className="px-4 py-2 bg-indigo-500/20 text-indigo-300 rounded-full text-sm font-medium border border-indigo-500/30 flex items-center">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processing Audio & Generating Summary...
+                </div>
+                <span className="text-xs text-gray-500 mt-2">
+                  (Check your backend terminal for real-time logs. Page will auto-refresh.)
+                </span>
               </div>
             )}
             <button
