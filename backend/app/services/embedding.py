@@ -18,3 +18,15 @@ def generate_embedding(text: str) -> list[float]:
     
     embedding = model.encode(text)
     return embedding.tolist()
+
+def _build_enriched_text(meeting_title: str, meeting_date, segment_text: str) -> str:
+    date_str = meeting_date.strftime("%Y-%m-%d") if meeting_date else "unknown date"
+    
+    # Ask Typhoon to translate the segment to the opposite language
+    # so the stored embedding captures both Thai and English semantics
+    translation = translate_for_embedding(segment_text)  # new helper below
+    
+    return (
+        f"Meeting: {meeting_title} | Date: {date_str}\n\n"
+        f"{segment_text}\n{translation}"
+    )

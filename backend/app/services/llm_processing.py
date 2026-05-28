@@ -169,3 +169,60 @@ def evaluate_best_transcript(t1: str, t2: str, t3: str) -> str:
     except Exception as e:
         logger.error(f"LLM Error during transcript evaluation: {e}")
         return t1
+
+def expand_search_query(query: str) -> str:
+    """
+    Rewrite the user's raw query into a richer, more specific version
+    before it is embedded and sent to pgvector.
+
+    Why this matters
+    ----------------
+    Short queries like "budget problem" or "ปัญหาการขาย" are ambiguous —
+    the same words appear in many meetings in different contexts. By asking
+    Typhoon to add likely intent words and domain context, the resulting
+    embedding lands in a more specific region of the vector space, so the
+    cosine search retrieves genuinely relevant chunks rather than any chunk
+    that happens to contain the keyword.
+
+    Falls back to the original query if the LLM call fails so search is
+    never blocked by this step.
+    """
+    prompt = f"""คุณคือระบบปรับปรุงคำค้นหาสำหรับเครื่องมือค้นหาบันทึกการประชุม
+หน้าที่ของคุณคือเขียนคำค้นหาของผู้ใช้ใหม่ให้มีความเฉพาะเจาะจงและชัดเจนยิ่งขึ้น
+
+กฎที่ต้องปฏิบัติตามอย่างเคร่งครัด:
+- ตอบเป็นภาษาไทยเสมอ แม้ว่าคำค้นหาต้นฉบับจะเป็นภาษาอังกฤษ
+- เพิ่มคำที่เกี่ยวข้องกับบริบทหรือโดเมนเพื่อให้ความหมายชัดเจนขึ้น
+- ห้ามเปลี่ยนความหมายหรือเพิ่มหัวข้อที่ไม่เกี่ยวข้อง
+- ตอบเฉพาะคำค้นหาที่เขียนใหม่เท่านั้น ห้ามอธิบายหรือเพิ่มเครื่องหมายใดๆ
+
+คำค้นหาต้นฉบับ: {query}
+
+คำค้นหาที่ปรับปรุงแล้ว:"""
+
+    try:
+        response = call_typhoon(prompt, max_tokens=120)   # reuse your existing Typhoon wrapper
+        rewritten = response.strip()
+        # Sanity check: if the model returns something suspiciously long or empty, fall back
+        if not rewritten or len(rewritten) > len(query) * 5:
+            return query
+        return rewritten
+    except Exception:
+        return query   # silent fallback — search still works, just without expansion
+
+def translate_for_embedding(text: str) -> str:
+    """
+    Translate a transcript chunk to the opposite language (Thai↔English)
+    so the stored embedding captures both, improving cross-lingual retrieval.
+    Fails silently — if translation fails the original text is still embedded.
+    """
+    prompt = f"""แปลข้อความต่อไปนี้เป็นภาษาอังกฤษหากเป็นภาษาไทย หรือแปลเป็นภาษาไทยหากเป็นภาษาอังกฤษ
+    ตอบเฉพาะคำแปลเท่านั้น ห้ามอธิบายเพิ่มเติม
+
+    ข้อความ: {text}
+
+    คำแปล:"""
+    try:
+        return call_typhoon(prompt, max_tokens=300).strip()
+    except Exception:
+        return ""
