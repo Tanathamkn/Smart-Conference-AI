@@ -138,6 +138,26 @@ def list_meetings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
     meetings = db.query(Meeting).offset(skip).limit(limit).all()
     return [{"id": m.id, "title": m.title, "date": m.date, "summary": m.summary} for m in meetings]
 
+@router.get("/meetings/stats")
+def get_stats(db: Session = Depends(get_db)):
+    """
+    Return total counts of action items and issues across all meetings.
+    Used by Dashboard to display real time stats.
+    """
+    action_count = db.query(ActionItem).count()
+    issue_count = db.query(Issue).count()
+
+    return {
+        "action_items": action_count,
+        "issues": issue_count,
+    }
+
+    return {
+        "action_count": action_count,
+        "issue_count": issue_count,
+        "meeting_count": meeting_count
+    }
+
 @router.get("/meetings/{meeting_id}")
 def get_meeting(meeting_id: int, db: Session = Depends(get_db)):
     """

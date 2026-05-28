@@ -9,15 +9,24 @@ interface Meeting {
   summary: string;
 }
 
+interface Stats {
+  action_items: number;
+  issues: number;
+}
+
 export default function Dashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [stats, setStats] = useState<Stats>({ action_items: 0, issues: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/meetings')
-      .then(res => res.json())
-      .then(data => {
-        setMeetings(data);
+    Promise.all([
+      fetch('http://localhost:8000/api/meetings').then(res => res.json()),
+      fetch('http://localhost:8000/api/meetings/stats').then(res => res.json()),
+    ])
+      .then(([meetingData, statsData]) => {
+        setMeetings(meetingData);
+        setStats(statsData);
         setLoading(false);
       })
       .catch(err => {
@@ -52,7 +61,7 @@ export default function Dashboard() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-gray-400 text-sm font-medium mb-1">Action Items</p>
-              <h3 className="text-3xl font-bold text-white">12</h3>
+              <h3 className="text-3xl font-bold text-white">{stats.action_items}</h3>
             </div>
             <div className="bg-green-500/20 p-3 rounded-xl">
               <CheckCircle className="w-6 h-6 text-green-400" />
@@ -63,8 +72,8 @@ export default function Dashboard() {
           <div className="absolute inset-0 bg-gradient-to-r from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Hours Processed</p>
-              <h3 className="text-3xl font-bold text-white">4.5</h3>
+              <p className="text-gray-400 text-sm font-medium mb-1">Issues & Risks</p>
+              <h3 className="text-3xl font-bold text-white">{stats.issues}</h3>
             </div>
             <div className="bg-secondary/20 p-3 rounded-xl">
               <Clock className="w-6 h-6 text-secondary" />

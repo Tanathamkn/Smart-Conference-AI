@@ -29,16 +29,40 @@ def extract_meeting_info(transcript: str):
         truncated += "\n[...transcript truncated for length...]"
         logger.warning(f"Transcript truncated from {len(transcript)} to {MAX_TRANSCRIPT_CHARS} chars for LLM.")
 
-    prompt = f"""You are an AI meeting assistant. Analyze the following meeting transcript and extract the requested information.
-Respond with ONLY a valid JSON object with these keys:
-- summary: A detailed summary of the meeting (string).
-- topics: A list of important discussion topics (list of strings).
-- decisions: A list of decisions and conclusions (list of strings).
-- action_items: A list of objects, each with 'owner', 'task_description', and 'due_date' (ISO format string or null).
-- issues: A list of objects, each with 'product', 'problem', and 'solution' (string or null).
+    prompt = f"""คุณคือผู้ช่วย AI สำหรับวิเคราะห์การประชุม มีความเชี่ยวชาญในการสกัดข้อมูลสำคัญจากบทถอดความการประชุมภาษาไทยและภาษาอังกฤษ
 
-Transcript:
-{truncated}"""
+กรุณาวิเคราะห์บทถอดความการประชุมด้านล่าง และสกัดข้อมูลตามที่กำหนด
+
+กฎที่ต้องปฏิบัติอย่างเคร่งครัด:
+- ตอบด้วย JSON object ที่ถูกต้องเท่านั้น ห้ามมีข้อความ คำอธิบาย หรือ markdown ใดๆ นอกจาก JSON
+- ห้ามใช้ ```json หรือ ``` ครอบ JSON
+- หากไม่พบข้อมูลในส่วนใด ให้ใส่ค่าว่าง [] หรือ null แทนการคาดเดา
+- สกัดข้อมูลจากบทถอดความเท่านั้น ห้ามเพิ่มข้อมูลที่ไม่มีในบทถอดความ
+- หากบทถอดความมีทั้งภาษาไทยและภาษาอังกฤษ ให้สรุปเป็นภาษาไทย
+
+โครงสร้าง JSON ที่ต้องการ:
+{{
+  "summary": "สรุปการประชุมอย่างละเอียด ครอบคลุมประเด็นสำคัญทั้งหมด (string)",
+  "topics": ["หัวข้อสำคัญที่มีการพูดถึงในการประชุม (list of strings)"],
+  "decisions": ["การตัดสินใจและข้อสรุปที่เกิดขึ้นในการประชุม (list of strings)"],
+  "action_items": [
+    {{
+      "owner": "ชื่อผู้รับผิดชอบ หรือ null หากไม่ระบุ",
+      "task_description": "รายละเอียดงานที่ต้องดำเนินการ",
+      "due_date": "วันกำหนดส่งในรูปแบบ YYYY-MM-DD หรือ null หากไม่ระบุ"
+    }}
+  ],
+  "issues": [
+    {{
+      "product": "ชื่อสินค้า โครงการ หรือระบบที่เกี่ยวข้อง หรือ null หากไม่ระบุ",
+      "problem": "รายละเอียดปัญหาที่พบ",
+      "solution": "แนวทางแก้ไขที่เสนอ หรือ null หากยังไม่มีแนวทาง"
+    }}
+  ]
+}}
+
+บทถอดความการประชุม:
+{transcript}"""
 
     try:
         response = client.chat.completions.create(
@@ -104,17 +128,34 @@ def evaluate_best_transcript(t1: str, t2: str, t3: str) -> str:
         # Fallback if no LLM: just return the first one
         return t1
 
-    prompt = f"""You are an expert transcriber. You are given 3 variations of the same speech-to-text transcript generated with different sampling temperatures. 
-Your goal is to output a single, final transcript that resolves any hallucinations, corrects grammar, and uses consensus among the 3 variations to produce the most accurate result.
-Return ONLY the final corrected transcript text. Do not include explanations, formatting tags, or conversational filler.
+    prompt = f"""คุณคือผู้เชี่ยวชาญด้านการถอดความเสียงที่มีความแม่นยำสูง เชี่ยวชาญทั้งภาษาไทยและภาษาอังกฤษ
 
-Variation 1:
+คุณได้รับบทถอดความ 3 เวอร์ชันจากไฟล์เสียงเดียวกัน ซึ่งสร้างด้วยค่า temperature ที่แตกต่างกัน แต่ละเวอร์ชันอาจมีข้อผิดพลาด การตีความผิด หรือคำที่ขาดหายไป
+
+หน้าที่ของคุณคือวิเคราะห์ทั้ง 3 เวอร์ชันและสร้างบทถอดความสุดท้ายที่ถูกต้องที่สุด
+
+หลักการวิเคราะห์:
+- ใช้ความเห็นตรงกันของทั้ง 3 เวอร์ชันเป็นเกณฑ์หลักในการตัดสิน
+- หากสองเวอร์ชันตรงกันและหนึ่งเวอร์ชันต่างออกไป ให้ใช้เวอร์ชันที่ตรงกัน
+- ตัดคำหรือประโยคที่ดูเหมือน hallucination ออก เช่น คำที่ไม่สอดคล้องกับบริบท หรือปรากฏเพียงเวอร์ชันเดียว
+- รักษาคำศัพท์ภาษาอังกฤษที่ปรากฏในบทถอดความไว้ตามเดิม อย่าแปลหรือเปลี่ยน
+- แก้ไขไวยากรณ์และการสะกดคำให้ถูกต้องโดยไม่เปลี่ยนความหมาย
+- รักษาลำดับและโครงสร้างของการสนทนาตามที่ปรากฏในบทถอดความ
+- หากทั้ง 3 เวอร์ชันไม่ตรงกันเลย ให้เลือกเวอร์ชันที่สมเหตุสมผลที่สุดตามบริบท
+
+กฎที่ต้องปฏิบัติอย่างเคร่งครัด:
+- ตอบด้วยบทถอดความสุดท้ายเท่านั้น
+- ห้ามมีคำอธิบาย ความคิดเห็น หรือข้อความใดๆ นอกจากบทถอดความ
+- ห้ามใช้ markdown, tag, หรือ formatting ใดๆ
+- ห้ามเพิ่มเนื้อหาที่ไม่มีในบทถอดความต้นฉบับ
+
+เวอร์ชันที่ 1:
 {t1}
 
-Variation 2:
+เวอร์ชันที่ 2:
 {t2}
 
-Variation 3:
+เวอร์ชันที่ 3:
 {t3}
 """
 
