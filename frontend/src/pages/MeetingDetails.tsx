@@ -42,7 +42,7 @@ export default function MeetingDetailsPage() {
         .then(data => {
           setMeeting(data);
           setLoading(false);
-          
+
           // Poll again if still processing
           if (!data.summary && !data.transcript) {
             timeoutId = window.setTimeout(fetchMeeting, 3000);
@@ -98,18 +98,18 @@ export default function MeetingDetailsPage() {
   const isProcessing = !meeting.summary && !meeting.transcript;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-      <Link to="/" className="inline-flex items-center text-gray-400 hover:text-white transition-colors">
+    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in-up duration-500 pb-12">
+      <Link to="/" className="inline-flex items-center text-black-400 hover:text-black transition-colors">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Dashboard
       </Link>
 
-      <header className="glass p-8 rounded-3xl relative overflow-hidden border border-white/10">
+      <header className="glass p-8 rounded-3xl relative overflow-hidden border border-black/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none"></div>
         <div className="relative z-10 flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">{meeting.title}</h1>
-            <div className="flex items-center text-gray-400">
+            <h1 className="text-3xl font-bold tracking-tight text-black mb-2">{meeting.title}</h1>
+            <div className="flex items-center text-black-400">
               <Calendar className="w-4 h-4 mr-2" />
               {new Date(meeting.date).toLocaleDateString()}
             </div>
@@ -121,7 +121,7 @@ export default function MeetingDetailsPage() {
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Processing Audio & Generating Summary...
                 </div>
-                <span className="text-xs text-gray-500 mt-2">
+                <span className="text-xs text-black-500 mt-2">
                   (Check your backend terminal for real-time logs. Page will auto-refresh.)
                 </span>
               </div>
@@ -143,19 +143,19 @@ export default function MeetingDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content - Summary & Transcript */}
           <div className="lg:col-span-2 space-y-8">
-            <section className="glass-dark p-8 rounded-3xl border border-white/5">
-              <h2 className="text-xl font-semibold mb-4 flex items-center text-white">
+            <section className="bg-white p-8 rounded-3xl border border-black/10">
+              <h2 className="text-xl font-semibold mb-4 flex items-center text-black">
                 <FileText className="w-5 h-5 mr-2 text-primary" />
                 Executive Summary
               </h2>
-              <div className="prose prose-invert max-w-none text-gray-300 leading-relaxed">
+              <div className="prose prose-invert max-w-none text-black-300 leading-relaxed">
                 <p>{meeting.summary || "No summary available."}</p>
               </div>
             </section>
 
-            <section className="glass-dark p-8 rounded-3xl border border-white/5">
-              <h2 className="text-xl font-semibold mb-4 text-white">Full Transcript</h2>
-              <div className="bg-black/30 p-6 rounded-2xl max-h-96 overflow-y-auto text-gray-400 text-sm leading-loose border border-white/5">
+            <section className="bg-white p-8 rounded-3xl border border-black/10">
+              <h2 className="text-xl font-semibold mb-4 text-black">Full Transcript</h2>
+              <div className="bg-white/30 p-6 rounded-2xl max-h-96 overflow-y-auto text-black-400 text-sm leading-loose border border-black/10">
                 {meeting.transcript || "No transcript available."}
               </div>
             </section>
@@ -163,21 +163,21 @@ export default function MeetingDetailsPage() {
 
           {/* Sidebar - Action Items & Issues */}
           <div className="space-y-8">
-            <section className="glass-dark p-6 rounded-3xl border border-white/5 relative overflow-hidden">
+            <section className="bg-white p-6 rounded-3xl border border-black/10 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-[40px] pointer-events-none"></div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center text-white relative z-10">
+              <h2 className="text-lg font-semibold mb-4 flex items-center text-black relative z-10">
                 <CheckCircle className="w-5 h-5 mr-2 text-green-400" />
                 Action Items
               </h2>
               {meeting.action_items.length === 0 ? (
-                <p className="text-gray-500 text-sm">No action items detected.</p>
+                <p className="text-black-500 text-sm">No action items detected.</p>
               ) : (
                 <ul className="space-y-4 relative z-10">
                   {meeting.action_items.map(item => (
-                    <li key={item.id} className="bg-white/5 p-4 rounded-xl border border-white/5">
-                      <p className="font-medium text-white text-sm mb-1">{item.task}</p>
-                      <div className="flex justify-between text-xs text-gray-400 mt-2">
-                        <span>Assignee: <span className="text-gray-300">{item.owner || 'Unassigned'}</span></span>
+                    <li key={item.id} className="bg-white/5 p-4 rounded-xl border border-black/10">
+                      <p className="font-medium text-black text-sm mb-1">{item.task}</p>
+                      <div className="flex justify-between text-xs text-black-400 mt-2">
+                        <span>Assignee: <span className="text-black-300">{item.owner || 'Unassigned'}</span></span>
                         <span className="px-2 py-0.5 rounded bg-white/10">{item.status}</span>
                       </div>
                     </li>
@@ -186,22 +186,22 @@ export default function MeetingDetailsPage() {
               )}
             </section>
 
-            <section className="glass-dark p-6 rounded-3xl border border-white/5 relative overflow-hidden">
+            <section className="bg-white p-6 rounded-3xl border border-black/10 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[40px] pointer-events-none"></div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center text-white relative z-10">
+              <h2 className="text-lg font-semibold mb-4 flex items-center text-black relative z-10">
                 <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
                 Issues & Risks
               </h2>
               {meeting.issues.length === 0 ? (
-                <p className="text-gray-500 text-sm">No issues detected.</p>
+                <p className="text-black-500 text-sm">No issues detected.</p>
               ) : (
                 <ul className="space-y-4 relative z-10">
                   {meeting.issues.map(issue => (
                     <li key={issue.id} className="bg-white/5 p-4 rounded-xl border border-red-500/10 border-l-2 border-l-red-500">
-                      <p className="font-medium text-white text-sm mb-1">{issue.problem}</p>
-                      {issue.product && <p className="text-xs text-gray-400 mb-2">Product: {issue.product}</p>}
+                      <p className="font-medium text-black text-sm mb-1">{issue.problem}</p>
+                      {issue.product && <p className="text-xs text-black-400 mb-2">Product: {issue.product}</p>}
                       {issue.solution && (
-                        <div className="mt-2 bg-black/20 p-2 rounded text-xs text-green-300 border border-green-500/10">
+                        <div className="mt-2 bg-white/20 p-2 rounded text-xs text-green-300 border border-green-500/10">
                           <span className="font-semibold block mb-0.5 text-green-400">Proposed Solution:</span>
                           {issue.solution}
                         </div>

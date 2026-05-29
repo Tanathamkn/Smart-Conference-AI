@@ -18,6 +18,8 @@ export default {
       },
       animation: {
         'gradient': 'gradient 8s linear infinite',
+        'fade-in-up': 'fadeInUp 0.7s ease-out forwards',
+        'enter-smooth': 'slideInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
       keyframes: {
         gradient: {
@@ -29,6 +31,14 @@ export default {
             'background-size': '200% 200%',
             'background-position': 'right center'
           },
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInUp: {
+          '0%': { opacity: '0', transform: 'translateY(16px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },

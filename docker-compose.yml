@@ -27,6 +27,13 @@ services:
       - hf_cache:/root/.cache/huggingface
     depends_on:
       - db
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
 
   frontend:
     build:

@@ -170,6 +170,20 @@ def evaluate_best_transcript(t1: str, t2: str, t3: str) -> str:
         logger.error(f"LLM Error during transcript evaluation: {e}")
         return t1
 
+def call_typhoon(prompt: str, max_tokens: int = 512) -> str:
+    if not client:
+        return ""
+    try:
+        response = client.chat.completions.create(
+            model="typhoon-v2.5-30b-a3b-instruct",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=max_tokens,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"LLM Error in call_typhoon: {e}")
+        return ""
+
 def expand_search_query(query: str) -> str:
     """
     Rewrite the user's raw query into a richer, more specific version
@@ -204,7 +218,7 @@ def expand_search_query(query: str) -> str:
         response = call_typhoon(prompt, max_tokens=120)   # reuse your existing Typhoon wrapper
         rewritten = response.strip()
         # Sanity check: if the model returns something suspiciously long or empty, fall back
-        if not rewritten or len(rewritten) > len(query) * 5:
+        if not rewritten or len(rewritten) > 400:
             return query
         return rewritten
     except Exception:
@@ -225,4 +239,29 @@ def translate_for_embedding(text: str) -> str:
     try:
         return call_typhoon(prompt, max_tokens=300).strip()
     except Exception:
-        return ""
+        return text
+
+
+def expand_query_bilingual(query: str) -> str:
+    """
+    Produce a bilingual embedding text: original query + its translation.
+
+    Why this matters
+    ----------------
+    bge-m3 is cross-lingual, so embedding a text that contains BOTH
+    "scholarship" and "ทุนการศึกษา" places the query vector in a region
+    of the vector space that is close to segments written in *either*
+    language.  Without this, an English query misses Thai-only segments
+    and vice-versa.
+
+    Falls back to the original query string if the LLM call fails —
+    the dense search still works, just without the cross-lingual boost.
+    """
+    try:
+        translation = translate_for_embedding(query)
+        # Only append if we got something different and not too long
+        if translation and translation.strip() and translation.strip() != query.strip() and len(translation) < 400:
+            return f"{query}\n{translation}"
+    except Exception:
+        pass
+    return query

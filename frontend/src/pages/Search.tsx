@@ -87,15 +87,15 @@ export default function SearchPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up duration-500 pb-12">
 
       {/* Header */}
       <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight mb-4 text-white flex items-center justify-center">
+        <h1 className="text-4xl font-bold tracking-tight mb-4 text-black flex items-center justify-center">
           <Sparkles className="w-8 h-8 text-primary mr-3" />
           Ask SmartConf AI
         </h1>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+        <p className="text-black-400 text-lg max-w-2xl mx-auto">
           Ask questions across all your previous meetings. The AI will synthesise
           an answer and show you the exact moments discussed.
         </p>
@@ -105,27 +105,27 @@ export default function SearchPage() {
       <form onSubmit={handleSearch} className="space-y-3">
         <div className="relative group z-20">
           <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
-          <div className="relative flex items-center bg-darker rounded-2xl p-2 border border-white/10">
+          <div className="relative flex items-center bg-white rounded-2xl p-2 border border-black/10">
             <SearchIcon className="w-6 h-6 text-gray-400 ml-4 flex-shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g. What were the sales issues discussed last quarter?"
-              className="flex-1 bg-transparent border-none text-white px-4 py-4 focus:outline-none focus:ring-0 text-lg placeholder-gray-500"
+              className="flex-1 bg-transparent border-none text-black px-4 py-4 focus:outline-none focus:ring-0 text-lg placeholder-gray-500"
             />
 
             {/* Filter toggle */}
             <button
               type="button"
               onClick={() => setShowFilters((v) => !v)}
-              className={`relative mr-2 p-2.5 rounded-xl transition-colors ${showFilters ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-white hover:bg-white/10'
+              className={`relative mr-2 p-2.5 rounded-xl transition-colors ${showFilters ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-black hover:bg-white/10'
                 }`}
               title="Filters"
             >
               <SlidersHorizontal className="w-5 h-5" />
               {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-black text-[10px] font-bold rounded-full flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -134,7 +134,7 @@ export default function SearchPage() {
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="bg-primary hover:bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="bg-primary hover:bg-indigo-600 text-darker px-8 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Ask AI'}
             </button>
@@ -143,14 +143,14 @@ export default function SearchPage() {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="bg-darker border border-white/10 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="bg-white border border-black/15 rounded-2xl p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-semibold text-white">Search filters</span>
+              <span className="text-sm font-semibold text-black">Search filters</span>
               {activeFilterCount > 0 && (
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+                  className="text-xs text-gray-400 hover:text-black flex items-center gap-1"
                 >
                   <X className="w-3 h-3" /> Clear all
                 </button>
@@ -160,34 +160,34 @@ export default function SearchPage() {
             {/* Date range */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Date from</label>
+                <label className="text-xs text-black-400 mb-1 block">Date from</label>
                 <input
                   type="date"
                   value={filters.date_from}
                   onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  className="w-full bg-black/15 border border-white/10 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:border-primary"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Date to</label>
+                <label className="text-xs text-black-400 mb-1 block">Date to</label>
                 <input
                   type="date"
                   value={filters.date_to}
                   onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary"
+                  className="w-full bg-black/15 border border-white/10 rounded-lg px-3 py-2 text-sm text-black focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
 
             {/* Meeting ID */}
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Restrict to meeting ID</label>
+              <label className="text-xs text-black-400 mb-1 block">Restrict to meeting ID</label>
               <input
                 type="number"
                 value={filters.meeting_id}
                 onChange={(e) => setFilters((f) => ({ ...f, meeting_id: e.target.value }))}
                 placeholder="Leave blank to search all meetings"
-                className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-primary"
+                className="w-full bg-black/15 border border-white/10 rounded-lg px-3 py-2 text-sm text-black placeholder-gray-600 focus:outline-none focus:border-primary"
               />
             </div>
 
@@ -207,12 +207,12 @@ export default function SearchPage() {
                       onChange={(e) => setFilters((f) => ({ ...f, [key]: e.target.checked }))}
                       className="sr-only"
                     />
-                    <div className={`w-8 h-4 rounded-full transition-colors ${filters[key] ? 'bg-primary' : 'bg-white/20'}`}>
+                    <div className={`w-8 h-4 rounded-full transition-colors ${filters[key] ? 'bg-primary' : 'bg-black/20'}`}>
                       <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${filters[key] ? 'translate-x-4' : 'translate-x-0.5'}`} />
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-white">{label}</div>
+                    <div className="text-sm text-black">{label}</div>
                     <div className="text-xs text-gray-500">{hint}</div>
                   </div>
                 </label>

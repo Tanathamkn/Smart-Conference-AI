@@ -36,44 +36,44 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 animate-fade-in-up duration-700">
       <header>
-        <h1 className="text-4xl font-bold tracking-tight mb-2 text-white">Dashboard</h1>
-        <p className="text-gray-400">Welcome back. Here is your meeting overview.</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-2 text-blue">Dashboard</h1>
+        <p className="text-black">Welcome back. Here is your meeting overview.</p>
       </header>
 
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-dark p-6 rounded-2xl relative overflow-hidden group">
+        <div className="bg-white p-6 rounded-2xl relative overflow-hidden group border border-gray">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Total Meetings</p>
-              <h3 className="text-3xl font-bold text-white">{meetings.length}</h3>
+              <p className="text-blue-950 text-sm font-medium mb-1">Total Meetings</p>
+              <h3 className="text-3xl font-bold text-blue-950">{meetings.length}</h3>
             </div>
             <div className="bg-primary/20 p-3 rounded-xl">
               <Users className="w-6 h-6 text-primary" />
             </div>
           </div>
         </div>
-        <div className="glass-dark p-6 rounded-2xl relative overflow-hidden group">
+        <div className="bg-white p-6 rounded-2xl relative overflow-hidden group border border-gray">
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Action Items</p>
-              <h3 className="text-3xl font-bold text-white">{stats.action_items}</h3>
+              <p className="text-blue-950 text-sm font-medium mb-1">Action Items</p>
+              <h3 className="text-3xl font-bold text-blue-950">{stats.action_items}</h3>
             </div>
             <div className="bg-green-500/20 p-3 rounded-xl">
               <CheckCircle className="w-6 h-6 text-green-400" />
             </div>
           </div>
         </div>
-        <div className="glass-dark p-6 rounded-2xl relative overflow-hidden group">
+        <div className="bg-white p-6 rounded-2xl relative overflow-hidden group border border-gray">
           <div className="absolute inset-0 bg-gradient-to-r from-secondary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Issues & Risks</p>
-              <h3 className="text-3xl font-bold text-white">{stats.issues}</h3>
+              <p className="text-blue-950 text-sm font-medium mb-1">Issues & Risks</p>
+              <h3 className="text-3xl font-bold text-blue-950">{stats.issues}</h3>
             </div>
             <div className="bg-secondary/20 p-3 rounded-xl">
               <Clock className="w-6 h-6 text-secondary" />
@@ -83,14 +83,14 @@ export default function Dashboard() {
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-white">Recent Meetings</h2>
+        <h2 className="text-xl font-semibold mb-4 text-blue">Recent Meetings</h2>
         {loading ? (
-          <div className="glass-dark rounded-2xl p-8 flex justify-center">
+          <div className="bg-white rounded-2xl p-8 flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : meetings.length === 0 ? (
-          <div className="glass-dark rounded-2xl p-12 text-center border border-dashed border-white/20">
-            <p className="text-gray-400 mb-4">No meetings recorded yet.</p>
+          <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-white/20">
+            <p className="text-white-400 mb-4">No meetings recorded yet.</p>
             <Link to="/upload" className="inline-flex items-center px-4 py-2 bg-primary hover:bg-indigo-600 transition-colors rounded-lg font-medium">
               Upload First Meeting
             </Link>
@@ -101,20 +101,20 @@ export default function Dashboard() {
               <Link
                 key={meeting.id}
                 to={`/meetings/${meeting.id}`}
-                className="block glass-dark p-6 rounded-2xl hover:bg-white/[0.08] transition-all transform hover:-translate-y-1 border border-transparent hover:border-white/10 group"
+                className="block bg-white p-6 rounded-2xl hover:bg-gray-200 transition-all transform hover:-translate-y-1 border border-gray hover:border-black/10 group"
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-primary transition-colors">{meeting.title}</h3>
-                    <div className="flex items-center text-sm text-gray-400">
+                    <h3 className="text-lg font-semibold text-blue mb-1 group-hover:text-primary transition-colors">{meeting.title}</h3>
+                    <div className="flex items-center text-sm text-black-400">
                       <Calendar className="w-4 h-4 mr-2" />
                       {new Date(meeting.date).toLocaleDateString()}
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-black-500 group-hover:text-blue transition-colors" />
                 </div>
                 {meeting.summary && (
-                  <p className="mt-4 text-sm text-gray-400 line-clamp-2 leading-relaxed">
+                  <p className="mt-4 text-sm text-black-400 line-clamp-2 leading-relaxed">
                     {meeting.summary}
                   </p>
                 )}

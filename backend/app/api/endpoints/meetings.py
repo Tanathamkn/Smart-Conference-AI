@@ -26,6 +26,21 @@ def parse_pgvector(val) -> list[float]:
     """Parse pgvector string '[0.1,-0.2,...]' into a float list."""
     return [float(x) for x in re.sub(r"[\[\]\s]", "", str(val)).split(",")]
 
+
+def safe_float(v, fallback: float = 0.0) -> float:
+    """Return v as a finite float, replacing NaN / ±inf with fallback.
+
+    ts_rank() returns NaN when the query contains no matching tokens,
+    and the cross-encoder returns raw unbounded logits.  Both break
+    Python's json.dumps which refuses non-finite IEEE-754 values.
+    """
+    import math
+    try:
+        f = float(v)
+        return fallback if not math.isfinite(f) else f
+    except (TypeError, ValueError):
+        return fallback
+
 def _build_enriched_text(meeting_title: str, meeting_date, segment_text: str) -> str:
     """
     Prepend meeting metadata to a chunk before embedding so the vector
@@ -123,7 +138,7 @@ def process_meeting_background(
             embedding = generate_embedding(enriched)          # ← enriched, not raw text
             db_segment = MeetingSegment(
                 meeting_id=meeting_id,
-                speaker=seg["speaker"],
+                speaker=seg.get("speaker", "Unknown"),
                 start_time=seg["start"],
                 end_time=seg["end"],
                 text=seg["text"],                             # store raw text for display
@@ -253,8 +268,14 @@ def search_meetings(
     rerank:     bool           = Query(True),
     db: Session = Depends(get_db),
 ):
+    # Fallback to the original query if the LLM expansion failed
     expanded_query  = expand_search_query(query)
-    query_embedding = generate_embedding(expanded_query)
+    if not expanded_query or not expanded_query.strip():
+        expanded_query = query
+        
+    # Generate bilingual text for the dense vector so it matches both Thai/English segments
+    bilingual_query = expand_query_bilingual(expanded_query)
+    query_embedding = generate_embedding(bilingual_query)
 
     # Format the embedding as a pgvector literal: '[0.1, 0.2, ...]'
     embedding_literal = "[" + ",".join(str(x) for x in query_embedding) + "]"
@@ -311,27 +332,32 @@ def search_meetings(
         return {"answer": "No relevant segments found.", "relevant_segments": [], "expanded_query": expanded_query}
 
     candidates = [
-    {
-        "segment_id":    row[0],
-        "meeting_id":    row[1],
-        "text":          row[2],
-        # pgvector returns the embedding as a string '[0.1, 0.2, ...]'
-        # json.loads handles both '[1,2,3]' and numpy-style representations
-        "embedding":     parse_pgvector(row[3]),
-        "meeting_title": row[4],
-        "meeting_date":  str(row[5]),
-        "dense_score":   float(row[6]),
-        "sparse_score":  float(row[7]),
-        "hybrid_score":  float(row[8]),
-    }
-    for row in rows
-]
+        {
+            "segment_id":    row[0],
+            "meeting_id":    row[1],
+            "text":          row[2],
+            # pgvector returns the embedding as a string '[0.1, 0.2, ...]'
+            "embedding":     parse_pgvector(row[3]),
+            "meeting_title": row[4],
+            "meeting_date":  str(row[5]),
+            # Sanitize: ts_rank returns NaN when query tokens don't match;
+            # cosine distance can edge into non-finite territory too.
+            "dense_score":   safe_float(row[6]),
+            "sparse_score":  safe_float(row[7]),
+            "hybrid_score":  safe_float(row[8]),
+        }
+        for row in rows
+    ]
 
     if mmr and len(candidates) > top_k:
         candidates = _mmr(query_embedding, candidates, lambda_=0.5, top_k=top_k * 2)
 
     if rerank:
         candidates = rerank_segments(query, candidates, top_k=top_k)
+        # Cross-encoder returns raw logits (unbounded) — sanitize before JSON
+        for c in candidates:
+            if "rerank_score" in c:
+                c["rerank_score"] = safe_float(c["rerank_score"])
     else:
         candidates = candidates[:top_k]
 

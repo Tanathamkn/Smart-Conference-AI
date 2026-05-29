@@ -1,4 +1,5 @@
 import os
+import torch
 from faster_whisper import WhisperModel
 
 try:
@@ -15,7 +16,7 @@ def get_faster_whisper_model(model_size: str):
             print(f"Loading Faster Whisper model: {model_size}")
             # Set device to 'cuda' if GPU is available, else 'cpu'
             # compute_type="int8" is good for reducing memory usage
-            _faster_whisper_models[model_size] = WhisperModel(model_size, device="cpu", compute_type="int8")
+            _faster_whisper_models[model_size] = WhisperModel(model_size, device="cuda", compute_type="float16")
         except Exception as e:
             print(f"Failed to load Faster Whisper model {model_size}: {e}")
             return None
@@ -29,12 +30,19 @@ def get_thonburian_model():
     if model_id not in _transformers_models:
         try:
             print(f"Loading Thonburian Whisper model: {model_id}")
+
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+
             _transformers_models[model_id] = pipeline(
                 "automatic-speech-recognition", 
-                model=model_id, 
-                device="cpu",
+                model=model_id,
+                device=device,
+                torch_dtype=torch_dtype,
                 chunk_length_s=30
             )
+            print(f"Thonburian Whisper model loaded successfully on [{device.upper()}]")
         except Exception as e:
             print(f"Failed to load Thonburian model: {e}")
             return None
